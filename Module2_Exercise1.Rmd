@@ -1,0 +1,174 @@
+---
+title: "Module2_Exercise1"
+author: "Laura Huber"
+date: "May 16, 2019"
+output: html_document
+---
+## Loading library
+```{r loading library}
+require(deSolve)
+```
+
+## Set a function:
+```{r set function}
+sir.model.close <- function (t, x, params) {    #here we begin a function with three arguments 
+  S <- x[1]                               #create local variable S, the first element of x
+  I <- x[2]                               #create local variable I
+  R <- x[3]                               #create local variable R
+  with(                                   #we can simplify code using "with"
+       as.list(params),                   #this argument to "with" lets us use the variable names
+       {                                  #the system of rate equations
+         dS <- -beta*S*I
+         dI <- beta*S*I-gamma*I
+         dR <- gamma*I
+         dx <- c(dS,dI,dR)                #combine results into a single vector dx
+         list(dx)                         #return result as a list
+       }
+       )
+}
+```
+
+
+## Setting values
+
+### Exercise 1
+If I change beta (transmission rate) to 0.8 and lambda (infectious rate) to 1/20, I obtained a graph that shows fast shift of Infectious cases over time and a rapid increase of number of people infected compared with susceptible. I.e., I might have accelarated the process of epidemics. 
+### Exercise 2
+If I change Susceptible, instead  of nearly 100%, to 50% (5000/10000), I can see that the shape is  similar, but that in the scale of the Infectious over time, it only reach to half of what it was before. Same for the comparison Infectious vs Susceptible.
+
+```{r set values}
+times <- seq(0,120,by=5)                    #function seq returns a sequence
+params <- c(beta=0.8,gamma=1/20)             #function c "c"ombines values into a vector --> I changed the values of beta and gamma in here 
+xstart <- c(S=5000/10000,I=1/10000,R=5000)     #initial conditions --> I changed to 5000/10000
+```
+
+## Saving in database
+```{r save in dataframe}
+out2 <- as.data.frame(ode(xstart,times,sir.model.close,params))  #result stored in dataframe --> I changed to opened for Exercise 3
+```
+
+## Plotting
+```{r plotting}
+op <- par(fig=c(0,0.5,0,1),mar=c(4,4,1,1))                  #set graphical parameters
+plot(I~time,data=out2,type='b')                              #plot the I variable against time
+par(fig=c(0.5,1,0,1),mar=c(4,1,1,1),new=T)                  #re-set graphical parameters
+plot(I~S,data=out2,type='b',yaxt='n',xlab='S')               #plot phase portrait
+par(op)    
+```
+
+### Exercise 3
+First, I need to write a new function:
+```{r function open}
+sir.model.open <- function (t, x, params2) {
+S <- x[1] 
+I <- x[2]
+R <- x[3] 
+with(
+as.list(params2),
+{ 
+dS <- mu*(S+I+R) -beta*S*I - mu*S
+dI <- beta*S*I-gamma*I - mu*I
+dR <- gamma*I - mu*R
+dx <- c(dS,dI,dR) 
+list(dx) 
+}
+)
+}
+```
+
+Then, I have to set the values:
+```{r set values2}
+times <- seq(0,120,by=5)                    #function seq returns a sequence
+params2 <- c(beta=0.8,gamma=1/20, mu=1/50)             #function c "c"ombines values into a vector 
+xstart <- c(S=5000/10000,I=1/10000,R=5000) #initial conditions --> I changed to 5000/10000
+```
+
+Then I have to save in the database
+
+```{r save in dataframe2}
+out3 <- as.data.frame(ode(xstart,times,sir.model.open,params2))  #result stored in dataframe
+```
+
+Then, I have to plot it
+```{r plotting2}
+op2 <- par(fig=c(0,0.5,0,1),mar=c(4,4,1,1))                  #set graphical parameters
+plot(I~time,data=out3,type='b')                              #plot the I variable against time
+par(fig=c(0.5,1,0,1),mar=c(4,1,1,1),new=T)                  #re-set graphical parameters
+plot(I~S,data=out3,type='b',yaxt='n',xlab='S')               #plot phase portrait
+par(op2)    
+```
+
+Thus, when I supply with susceptible individuals, the graphs are less steep, i.e., the epidemic is in an equilibrium.
+
+### Exercise 4
+Write a new function: 
+```{r function3}
+seir.model.closed2 <- function (t, x, params) {
+S <- x[1] 
+E <- x[2] 
+I <- x[3]
+R <- x[4] 
+with( 
+as.list(params),
+{
+
+dS <- -beta*S*I
+dE <- beta*S*I - sigma*E
+dI <- sigma*E - gamma*I
+dR <- gamma*I
+dx <- c(dS,dE, dI,dR)
+list(dx)
+}
+)
+}
+```
+
+Set the parameters:
+```{r parameters3}
+params3 <- c(beta=0.3,sigma=1/14, gamma=1/7)
+
+xstart <- c(S=9999/10000, E=0, I=1/10000,R=0)
+times <- seq(0,240,by=1)
+```
+Set dataframe
+
+```{r save in dataframe3}
+out4 <- as.data.frame(ode(xstart,times,seir.model.closed2,params3))  #result stored in dataframe
+```
+Then, I plot
+```{r plotting4}
+op3 <- par(fig=c(0,0.5,0,1),mar=c(4,4,1,1))                  #set graphical parameters
+plot(I~time,data=out4,type='b')                              #plot the I variable against time
+par(fig=c(0.5,1,0,1),mar=c(4,1,1,1),new=T)                  #re-set graphical parameters
+plot(I~S,data=out4,type='b',yaxt='n',xlab='S')               #plot phase portrait
+par(op3)    
+```
+
+Thus, the presence of a latent period, delays the epidemics and takes longer time to  reach the max value.
+
+### In the solutions, these are the plots generated 
+```{r codes in the solution from the class}
+params11 <- c(beta=0.3, sigma=1/0.0001, gamma=1/7)
+params12 <- c(beta=0.3, sigma=1/3.5, gamma=1/7)
+params13 <- c(beta=0.3, sigma=1/7, gamma=1/7)
+params14 <- c(beta=0.3, sigma=1/14, gamma=1/7)
+
+out11 <- as.data.frame(lsoda(xstart,times,seir.model.closed2,params11))
+out12 <- as.data.frame(lsoda(xstart,times,seir.model.closed2,params12))
+out13 <- as.data.frame(lsoda(xstart,times,seir.model.closed2,params13))
+out14 <- as.data.frame(lsoda(xstart,times,seir.model.closed2,params14))
+op <- par(fig=c(0,0.5,0,1),mar=c(4,4,1,1))
+plot(I~time,data=out11,type='l', lwd=2, ylim=c(0, 0.3))
+lines(I~time,data=out12,type='l', lwd=2, col='red')
+lines(I~time,data=out13,type='l', lwd=2, col='blue')
+lines(I~time,data=out14,type='l', lwd=2, col='green')
+
+par(fig=c(0.5,1,0,1),mar=c(4,1,1,1),new=T)
+plot(I~S,data=out11,type='l',lwd=2, log='x',yaxt='n',xlab='S', ylim=c(0.01, 0.3), xlim=c(0.01, 1))
+lines(I~S,data=out12,type='l', lwd=2, col='red')
+lines(I~S,data=out13,type='l', lwd=2, col='blue')
+lines(I~S,data=out14,type='l', lwd=2, col='green')
+par(op)
+```
+
+They used many different parameters combinations to generate the plot with differnt lattent periods. As you increase latent period, you also increase the delay of epidemic takeoff.
